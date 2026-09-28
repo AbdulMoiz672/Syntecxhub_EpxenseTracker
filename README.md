@@ -1,4 +1,4 @@
-# Pennywise Expense Tracker
+# Syntecxhub_EpxenseTracker
 
 A responsive expense-tracking dashboard built with React, Vite, Express, and MongoDB. The client reads and writes expenses through a REST API; MongoDB stores the records. The current prototype has no registration or login, so all users of the connected database share one expense collection.
 
