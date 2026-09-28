@@ -11,6 +11,7 @@ import {
   ForkKnife,
   House,
   LayoutDashboard,
+  LogOut,
   Plus,
   Search,
   ShoppingBag,
@@ -23,6 +24,8 @@ import {
   X,
 } from 'lucide-react'
 import { createExpense, fetchExpenses, removeExpense } from './data/expensesApi.js'
+import { getCurrentUser, logoutAccount } from './data/authApi.js'
+import AuthPage from './AuthPage.jsx'
 
 const categories = ['Groceries', 'Dining', 'Transport', 'Shopping', 'Subscriptions', 'Housing', 'Other']
 const categoryStyles = {
@@ -37,7 +40,7 @@ const categoryStyles = {
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const today = new Date().toISOString().slice(0, 10)
 
-export default function App() {
+function ExpenseDashboard({ user, onSignOut }) {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7))
@@ -193,10 +196,10 @@ export default function App() {
             <div className="budget-track"><span style={{ width: `${budgetPercent}%` }} /></div>
             <div className="budget-note-meta"><span>{money.format(Math.max(0, budget - monthTotal))} left</span><span>{Math.round(budgetPercent)}%</span></div>
           </div>
-          <button className="profile-button" type="button" aria-label="Account profile">
-            <span className="avatar">JD</span>
-            <span className="profile-copy"><strong>Jamie Davis</strong><small>Personal account</small></span>
-            <Ellipsis size={19} />
+          <button className="profile-button" type="button" onClick={onSignOut} aria-label="Sign out">
+            <span className="avatar">{user.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</span>
+            <span className="profile-copy"><strong>{user.name}</strong><small>Sign out</small></span>
+            <LogOut size={17} />
           </button>
         </div>
       </aside>
@@ -206,6 +209,7 @@ export default function App() {
           <div className="breadcrumb"><span>Workspace</span><span className="breadcrumb-slash">/</span><strong>Overview</strong></div>
           <div className="topbar-actions">
             <span className="sync-status"><span /> All changes saved</span>
+            <button className="mobile-signout" type="button" onClick={onSignOut} aria-label="Sign out"><LogOut size={15} /></button>
             <button className="top-add-button" type="button" onClick={focusExpenseForm}><Plus size={16} /> <span>New expense</span></button>
           </div>
         </header>
@@ -214,7 +218,7 @@ export default function App() {
           <section className="welcome-row">
             <div>
               <div className="eyebrow"><CalendarDays size={14} /> YOUR MONEY, IN FOCUS</div>
-              <h1>Good morning, Jamie <span className="wave">✳</span></h1>
+              <h1>Good morning, {user.name.split(/\s+/)[0]} <span className="wave">✳</span></h1>
               <p className="welcome-copy">A clear view of where your money goes.</p>
             </div>
               <label className="period-button"><CalendarDays size={16} /><span className="sr-only">Summary month</span><select className="period-select" aria-label="Summary month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}>{monthOptions.map((month) => <option key={month.value} value={month.value}>{month.label}</option>)}</select><ChevronDown size={15} /></label>
@@ -319,4 +323,30 @@ export default function App() {
       {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
     </div>
   )
+}
+
+export default function App() {
+  const [user, setUser] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    getCurrentUser()
+      .then((currentUser) => { if (active) setUser(currentUser) })
+      .catch(() => { if (active) setUser(null) })
+      .finally(() => { if (active) setCheckingSession(false) })
+    return () => { active = false }
+  }, [])
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await logoutAccount()
+    } finally {
+      setUser(null)
+    }
+  }, [])
+
+  if (checkingSession) return <div className="auth-loading">Opening your workspace…</div>
+  if (!user) return <AuthPage onAuthenticated={setUser} />
+  return <ExpenseDashboard key={user.id} user={user} onSignOut={handleSignOut} />
 }

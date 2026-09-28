@@ -270,3 +270,6 @@ h1 { margin: 9px 0 5px; color: #26352d; font-family: Manrope, sans-serif; font-s
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+.mobile-signout { display: none; width: 32px; height: 32px; align-items: center; justify-content: center; border: 1px solid #e3e7df; border-radius: 5px; background: #fff; color: #526158; cursor: pointer; }
+@media (max-width: 860px) { .mobile-signout { display: flex; } }
+@media (max-width: 650px) { .mobile-signout { width: 31px; height: 32px; } }

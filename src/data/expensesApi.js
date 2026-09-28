@@ -13,6 +13,9 @@ async function request(path, options = {}) {
   }
 
   const result = await response.json().catch(() => ({}))
+  if (response.status >= 500) {
+    throw new Error('The API is unavailable. Check that MongoDB is running, then restart npm run dev.')
+  }
   if (!response.ok) throw new Error(result.error || 'The expense request failed.')
   return result
 }
